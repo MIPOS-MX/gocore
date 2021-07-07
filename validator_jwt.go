@@ -31,6 +31,23 @@ func JWTValidator() gin.HandlerFunc {
 			return
 		} else {
 			db := c.MustGet("db").(*gorm.DB)
+
+			// OBTENER PERMISO DE LA RUTA
+			var permission Permissions
+			res_perm := db.First(&permission, "path = ? AND method = ?", c.FullPath(), c.Request.Method)
+
+			if res_perm.Error != nil {
+				c.AbortWithStatusJSON(404, gin.H{"success": false, "message": "Recurso no encontrado"})
+				return
+			}
+
+			// VALIDAR SI LA RUTA TIENE DESHABILITADA LA AUTENTICACION
+			if permission.NoAuth {
+				c.Next()
+				return
+			}
+
+			// OBTENER VARIABLES DE JWT
 			key := []byte(os.Getenv("JWT_KEY"))
 			verifier, err := jwt.NewVerifierHS(jwt.HS256, key)
 			tokenString := ExtractToken(c.Request)
@@ -65,7 +82,7 @@ func JWTValidator() gin.HandlerFunc {
 			}
 
 			// VALIDATE IF IS AGENT
-			if db.First(&Agents{}, "uid = ?", claims.Subject).RowsAffected == 0 {
+			if db.First(&User{}, "uid = ?", claims.Subject).RowsAffected == 0 {
 				c.AbortWithStatusJSON(401, gin.H{"success": false, "message": "No autorizado como agente"})
 				return
 			}

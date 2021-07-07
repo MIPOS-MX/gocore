@@ -35,15 +35,11 @@ func SetupModels(cfg Configuration) *gorm.DB {
 
 	cfg.BeforeSetup(db)
 
-	log.Debug("Migrando tabla agentes")
-	db.AutoMigrate(&Agents{})
+	//log.Debug("Migrando tabla agentes")
+	//db.AutoMigrate(&Agents{})
 
 	log.Debug("Migrando tabla de roles")
 	db.AutoMigrate(&Roles{})
-
-	log.Debug("Migrando tabla enviroment")
-	db.AutoMigrate(&ConfigVars{})
-	createEnvVars(cfg.Variables, db)
 
 	log.Debug("Migrando tabla de permisos")
 	db.AutoMigrate(&Permissions{})
@@ -59,19 +55,6 @@ func SetupModels(cfg Configuration) *gorm.DB {
 	return db
 }
 
-func createEnvVars(env []ConfigVars, db *gorm.DB) {
-	for _, _var := range env {
-		if db.First(&ConfigVars{}, "key = ?", _var.Key).RowsAffected == 0 {
-			log.Debug("Creando variable: " + _var.Key)
-			db.Create(&ConfigVars{
-				Key:         _var.Key,
-				Value:       _var.Value,
-				Description: _var.Description,
-			})
-		}
-	}
-}
-
 func createPermissions(routes []Routes, db *gorm.DB) {
 	for _, route := range routes {
 		var split_route = strings.Split(route.Path, "/")
@@ -81,14 +64,14 @@ func createPermissions(routes []Routes, db *gorm.DB) {
 		}
 
 		if db.First(&Permissions{}, "path = ? AND method = ?", route.Path, route.Method).RowsAffected == 0 {
-			log.Debug("Creando permiso: " + route.Name)
+			log.Debug("Creando permiso de ruta " + route.Path + "en metodo " + route.Method)
 			pid := uuid.New()
 			db.Create(&Permissions{
 				Pid:         pid,
-				Name:        route.Name,
-				Description: route.Description,
 				Category:    route.Category,
+				Description: route.Description,
 				Self:        route.Self,
+				NoAuth:      route.NoAuth,
 				Path:        route.Path,
 				Method:      route.Method,
 			})

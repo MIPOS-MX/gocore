@@ -22,12 +22,12 @@ func PermissionsValidator() gin.HandlerFunc {
 		uid := c.MustGet("uid").(string)
 
 		// OBTENER DATOS DEL AGENTE
-		var agent Agents
-		db.First(&agent, "uid = ?", uid)
+		var user User
+		db.First(&user, "uid = ?", uid)
 
 		// OBTENER ROL DEL AGENTE
 		var role Roles
-		db.First(&role, "rid = ?", agent.Rid)
+		db.First(&role, "rid = ?", user.Rid)
 
 		// OBTENER PERMISO DE LA RUTA
 		var permission Permissions
@@ -46,6 +46,12 @@ func PermissionsValidator() gin.HandlerFunc {
 
 		// VALIDAR SI LA RUTA ES DE TIPO SELF
 		if permission.Self {
+			c.Next()
+			return
+		}
+
+		// VALIDAR SI LA RUTA TIENE DESHABILITADA LA AUTENTICACION
+		if permission.NoAuth {
 			c.Next()
 			return
 		}
