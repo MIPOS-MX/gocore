@@ -1,4 +1,4 @@
-module github.com/grupoesquimal/aumpi_gocore
+module github.com/MIPOS-MX/gocore
 
 go 1.15
 
